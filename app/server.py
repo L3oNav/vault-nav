@@ -1,18 +1,13 @@
 import socket
 from app.client import RedisClient
+from threading import Thread
 
-
-class RedisServer:
+class RedisServer(Thread):
     def __init__(self, host="localhost", port=6379):
-        server_socket = socket.create_server((host, port), reuse_port=True)
-        skt, skt_addr = server_socket.accept()
-        self.client = RedisClient(skt, skt_addr)
+        self.server_socket = socket.create_server((host, port), reuse_port=True)
     
     def run(self):
         while True:
-            res = self.client.recv()
-            if res == b"*1\r\n$4\r\nping\r\n":
-                self.client.send("$4\r\nPONG\r\n")
-            elif res == b"":
-                break
-            
+            skt, addr = self.server_socket.accept()
+            self.client_sk = RedisClient(skt, addr)
+            Thread(target=self.client_sk.hc).start()

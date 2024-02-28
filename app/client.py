@@ -13,3 +13,13 @@ class RedisClient:
 
     def send(self, data):
         self.sock.send(data.encode())
+    
+    def hc(self):
+        while True:
+            data = self.recv()
+            print("->",data)
+            if data == b"*1\r\n$4\r\nping\r\n":
+                self.send("+PONG\r\n")
+            if not data:
+                break
+        self.sock.close()
