@@ -8,7 +8,7 @@ class RedisClient:
        self.sock = socket
        self.address = address
 
-    def parse_resp_command(data):
+    def parse_resp_command(self, data):
         lines = data.split("\r\n")
         command = None
         arguments = []
@@ -23,7 +23,7 @@ class RedisClient:
         return command, arguments
 
     def recv(self):
-        return self.sock.recv(1024)
+        return self.sock.recv(1024).decode()
 
     def send(self, data):
         self.sock.send(data.encode())
@@ -38,6 +38,6 @@ class RedisClient:
                 message = args[0]
                 response = f"${len(message)}\r\n{message}\r\n"
                 self.send(response)
-            if not data:
+            if not cmmd:
                 break
         self.sock.close()
