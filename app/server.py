@@ -1,7 +1,7 @@
 import socket
+import argparse
 from app.client import RedisClient
 from threading import Thread
-
 
 class RedisServer(Thread):
     def __init__(self, host="localhost", port=6379):
