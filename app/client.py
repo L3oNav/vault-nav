@@ -1,5 +1,6 @@
 import socket
 import threading
+from datetime import datetime, timedelta
 from app.db import MemoryStorage
 #Redis class to handle the server, usign threading to handle multiple clients
 
@@ -41,11 +42,17 @@ class RedisClient:
                 message = args[0]
                 response = f"${len(message)}\r\n{message}\r\n"
                 self.send(response)
-            #set
+            #set, with expiration PX, px and pX are all valid
             if cmmd == "SET" and args:
                 key = args[0]
                 value = args[1]
-                self.storage.set(key, value)
+                lifetime = None 
+                if len(args) > 2:
+                    if args[2].upper() == "PX" or args[2].upper() == "EX":
+                        lifetime = datetime.now() + timedelta(
+                            milliseconds=int(args[3])
+                        )
+                self.storage.set(key, value, lifetime)
                 self.send("+OK\r\n")
             #get
             if cmmd == "GET" and args:
