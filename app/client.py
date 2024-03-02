@@ -1,10 +1,12 @@
 import socket
 import threading
+from app.db import MemoryStorage
 #Redis class to handle the server, usign threading to handle multiple clients
 
 class RedisClient:
 
     def __init__(self, socket, address):
+       self.storage = MemoryStorage()
        self.sock = socket
        self.address = address
 
@@ -31,6 +33,7 @@ class RedisClient:
     def hc(self):
         while True:
             cmmd, args = self.parse_resp_command(self.recv()) 
+            #ping
             if cmmd == "PING":
                 self.send("+PONG\r\n")
             #echo
@@ -38,6 +41,21 @@ class RedisClient:
                 message = args[0]
                 response = f"${len(message)}\r\n{message}\r\n"
                 self.send(response)
+            #set
+            if cmmd == "SET" and args:
+                key = args[0]
+                value = args[1]
+                self.storage.set(key, value)
+                self.send("+OK\r\n")
+            #get
+            if cmmd == "GET" and args:
+                key = args[0]
+                value = self.storage.get(key)
+                if value:
+                    response = f"${len(value)}\r\n{value}\r\n"
+                    self.send(response)
+                else:
+                    self.send("$-1\r\n")
             if not cmmd:
                 break
         self.sock.close()
