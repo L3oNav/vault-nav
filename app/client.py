@@ -63,6 +63,10 @@ class RedisClient:
                     self.send(response)
                 else:
                     self.send("$-1\r\n")
+            #info
+            if cmmd == "INFO":
+                response = f"$11\r\nrole:master\r\n"
+                self.send(response)
             if not cmmd:
                 break
         self.sock.close()
