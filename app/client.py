@@ -6,10 +6,11 @@ from app.db import MemoryStorage
 
 class RedisClient:
 
-    def __init__(self, socket, address):
-       self.storage = MemoryStorage()
-       self.sock = socket
-       self.address = address
+    def __init__(self, socket, address, role):
+        self.storage = MemoryStorage()
+        self.sock = socket
+        self.address = address
+        self.role = role
 
     def parse_resp_command(self, data):
         lines = data.split("\r\n")
@@ -65,7 +66,8 @@ class RedisClient:
                     self.send("$-1\r\n")
             #info
             if cmmd == "INFO":
-                response = f"$11\r\nrole:master\r\n"
+                
+                response = f"${5 + len(self.role)}\r\nrole:{self.role}\r\n"
                 self.send(response)
             if not cmmd:
                 break
