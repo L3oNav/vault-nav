@@ -2,6 +2,8 @@
 import socket
 import argparse
 from app.server import RedisServer
+import hashlib
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--host", default="localhost", type=str, help="Host to bind the server")
@@ -10,6 +12,10 @@ parser.add_argument("--replicaof", nargs=2, metavar=("master_host", "master_port
 
 args = parser.parse_args()
 
+def generate_alphanumeric_string():
+        import random
+        import string
+        return ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(40))
 class Conf:
     def __init__(self, args):
         self.host = args.host
@@ -17,6 +23,8 @@ class Conf:
         self.master_host = args.replicaof[0] if args.replicaof else None
         self.master_port = args.replicaof[1] if args.replicaof else None
         self.role = "slave" if args.replicaof else "master"
+        self.replicaid = generate_alphanumeric_string() if self.role == "master" else ''
+        self.replicaoffset = 0
 
         @property
         def host(self):
@@ -35,6 +43,7 @@ class Conf:
             return self.master_port
 
 config = Conf(args)
+
 
 def main():
     # You can use print statements as follows for debugging, they'll be visible when running tests.
