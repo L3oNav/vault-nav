@@ -6,13 +6,13 @@ from app.db import MemoryStorage
 
 class RedisClient:
 
-    def __init__(self, socket, address, role, replicaid, replicaoffset):
+    def __init__(self, socket, address, role: str = 'master', replicaid: str = '', replicaoffset: int = 0):
         self.storage = MemoryStorage()
         self.sock = socket
         self.address = address
         self.role = role
-        self.replicaid = replicaid 
-        self.replicaoffset = replicaoffset 
+        self.replicaid = replicaid
+        self.replicaoffset = replicaoffset
 
     def parse_resp_command(self, data):
         lines = data.split("\r\n")

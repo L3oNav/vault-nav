@@ -1,7 +1,9 @@
 # Uncomment this to pass the first stage
 import socket
+import asyncio
 import argparse
-from app.server import RedisServer
+from app.server import Server
+from app.replic_manager import ReplicationClient
 import hashlib
 
 
@@ -44,7 +46,6 @@ class Conf:
 
 config = Conf(args)
 
-
 def main():
     # You can use print statements as follows for debugging, they'll be visible when running tests.
     print("Logs from your program will appear here!")
@@ -52,9 +53,15 @@ def main():
     # Uncomment this to pass the first stage
     if config.port is None:
         print("Missing port argument")
-    server = RedisServer(config=config)
+    if config.role == "slave" and (config.master_host is None or config.master_port is None):
+        print("Missing master_host or master_port argument")
+    if config.role == "master" and (config.master_host is not None or config.master_port is not None):
+        print("Master cannot have master_host or master_port arguments")
+        
+    server = Server(config)
     server.run()
+   
 
 
 if __name__ == "__main__":
-    main()
+    main() 

@@ -1,9 +1,10 @@
 import socket
-import argparse
+import asyncio
 from app.client import RedisClient
+from app.replic_manager import ReplicationClient
 from threading import Thread
 
-class RedisServer(Thread):
+class Server(Thread):
     def __init__(self, config):
         self.server_socket = socket.create_server(("localhost", config.port))
         self.role = config.role
@@ -11,10 +12,21 @@ class RedisServer(Thread):
         self.master_port = config.master_port
         self.replicaid = config.replicaid
         self.replicaoffset = config.replicaoffset
-        self.client_sk = None
+        if not self.is_master():
+            self.master_client = ReplicationClient(self.master_host, self.master_port) 
+
+    def is_master(self):
+        return self.role == "master"
 
     def run(self):
+        if not self.is_master():
+                master = self.master_client
+                master.connect()
         while True:
             skt, addr = self.server_socket.accept()
             self.client_sk = RedisClient(skt, addr, self.role, self.replicaid, self.replicaoffset)
             Thread(target=self.client_sk.hc, daemon=True).start()
+
+    async def handle_replication(self):
+        if not self.is_master():
+            await self.master_client.connect()
