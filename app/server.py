@@ -13,7 +13,7 @@ class Server(Thread):
         self.replicaid = config.replicaid
         self.replicaoffset = config.replicaoffset
         if not self.is_master():
-            self.master_client = ReplicationClient(self.master_host, self.master_port) 
+            self.master_client = ReplicationClient(self.master_host, self.master_port, current_port=config.port) 
 
     def is_master(self):
         return self.role == "master"
@@ -26,7 +26,3 @@ class Server(Thread):
             skt, addr = self.server_socket.accept()
             self.client_sk = RedisClient(skt, addr, self.role, self.replicaid, self.replicaoffset)
             Thread(target=self.client_sk.hc, daemon=True).start()
-
-    async def handle_replication(self):
-        if not self.is_master():
-            await self.master_client.connect()
