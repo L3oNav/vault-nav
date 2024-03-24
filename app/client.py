@@ -74,7 +74,7 @@ class RedisClient:
                     f"master_repl_offset:{self.replicaoffset}",
                 ])
                 self.send(f"${len(response)}\r\n{response}\r\n")
-            if cmmd == "REPLICAOF" and args:
+            if cmmd == "REPLCONF" and args:
                 host = args[0]
                 port = args[1]
                 self.send("+OK\r\n")
