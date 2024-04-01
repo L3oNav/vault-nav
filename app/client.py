@@ -2,6 +2,7 @@ import socket
 import threading
 from datetime import datetime, timedelta
 from app.db import MemoryStorage
+import base64
 #Redis class to handle the server, usign threading to handle multiple clients
 
 class RedisClient:
@@ -40,7 +41,7 @@ class RedisClient:
         return data
     
     def send(self, data):
-        self.sock.sendall(data.encode())
+        self.sock.sendall(data.encode("utf-8"))
 
     def hc(self):
         while True:
@@ -92,6 +93,8 @@ class RedisClient:
             if cmmd == "PSYNC" and args:
                 response = (f"+FULLRESYNC {self.replicaid} {self.replicaoffset}\r\n")
                 self.send(f"${len(response)}\r\n{response}\r\n")
+                rdb = base64.b64decode("UkVESVMwMDEx+glyZWRpcy12ZXIFNy4yLjD6CnJlZGlzLWJpdHPAQPoFY3RpbWXCbQi8ZfoIdXNlZC1tZW3CsMQQAPoIYW9mLWJhc2XAAP/wbjv+wP9aog==")
+                self.sock.send(f"${len(rdb)}\r\n".encode() + rdb)
             #replconf
             if cmmd == "REPLCONF" and args:
                 self.send("+OK\r\n")
