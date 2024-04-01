@@ -6,14 +6,20 @@ from app.db import MemoryStorage
 
 class RedisClient:
 
-    def __init__(self, socket, address, role: str = 'master', replicaid: str = '', replicaoffset: int = 0):
+    def __init__(self, sock, address, port,role: str = 'master', replicaid: str = '', replicaoffset: int = 0, master_host: str = None, master_port: int = None):
         self.storage = MemoryStorage()
-        self.sock = socket
+        self.sock = sock
         self.address = address
+        self.port = port
         self.role = role
         self.replicaid = replicaid
         self.replicaoffset = replicaoffset
-
+        if self.role == "slave":
+            self.master_host = str(master_host)
+            self.master_port = int(master_port)
+            self.master = socket.socket()
+            self.master.connect((self.master_host, self.master_port))
+    
     def parse_resp_command(self, data):
         lines = data.split("\r\n")
         command = None
@@ -29,14 +35,16 @@ class RedisClient:
         return command, arguments
 
     def recv(self):
-        return self.sock.recv(1024).decode()
-
-    def send(self, data):
-        self.sock.send(data.encode())
+        data = self.sock.recv(1024).decode()
+        print("request: ",data)
+        return data
     
+    def send(self, data):
+        self.sock.sendall(data.encode())
+
     def hc(self):
         while True:
-            cmmd, args = self.parse_resp_command(self.recv()) 
+            cmmd, args = self.parse_resp_command(self.recv())
             #ping
             if cmmd == "PING":
                 self.send("+PONG\r\n")
@@ -68,16 +76,27 @@ class RedisClient:
                     self.send("$-1\r\n")
             #info
             if cmmd == "INFO":
+                print("INFO command received")
                 response = '\n'.join([
                     f"role:{self.role}",
                     f"master_replid:{self.replicaid}",
                     f"master_repl_offset:{self.replicaoffset}",
                 ])
                 self.send(f"${len(response)}\r\n{response}\r\n")
-            if cmmd == "REPLCONF" and args:
+            #replicaof
+            if cmmd == "REPLICAOF" and args:
                 host = args[0]
                 port = args[1]
                 self.send("+OK\r\n")
+            #psync
+            if cmmd == "PSYNC" and args:
+                response = (f"+FULLRESYNC {self.replicaid} {self.replicaoffset}\r\n")
+                self.send(f"${len(response)}\r\n{response}\r\n")
+            #replconf
+            if cmmd == "REPLCONF" and args:
+                self.send("+OK\r\n")
+            #command not found
             if not cmmd:
+                print("command not found")
                 break
         self.sock.close()
