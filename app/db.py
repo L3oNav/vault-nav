@@ -8,7 +8,7 @@ class Item:
         self.lifetime = lifetime
 
 class MemoryStorage:
-
+    
     storage: dict[str, Item]
 
     def __init__(self):
@@ -23,6 +23,7 @@ class MemoryStorage:
             if item.lifetime and self.expired(key, item.lifetime):
                 del self.storage[key]
                 return None
+            
             return item.value
         return None
         
@@ -32,12 +33,15 @@ class MemoryStorage:
             return 1
         return 0
     
-    def expired(self, key, item_lifetime: Item):
+    def expired(self, key, item_lifetime):
         if item_lifetime < datetime.now():
             self.set(key, None)
             return True
         return False
     
+    def printall(self):
+        for key, value in self.storage.items():
+            print(f"{key}: {value.value}")
 
     def exists(self, key):
         return key in self.storage

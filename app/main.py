@@ -2,8 +2,8 @@
 import socket
 import asyncio
 import argparse
-from app.server import Server
-from app.replic_manager import ReplicationClient
+from app.server import Server, ServerMasterConnectThread
+from app.vault import Vault
 import hashlib
 
 
@@ -22,46 +22,39 @@ class Conf:
     def __init__(self, args):
         self.host = args.host
         self.port = args.port
-        self.master_host = args.replicaof[0] if args.replicaof else None
-        self.master_port = args.replicaof[1] if args.replicaof else None
         self.role = "slave" if args.replicaof else "master"
         self.replicaid = generate_alphanumeric_string() if self.role == "master" else ''
         self.replicaoffset = 0
+        self.master_host = args.replicaof[0] if args.replicaof else None
+        self.master_port = int(args.replicaof[1]) if args.replicaof else None
 
-        @property
-        def host(self):
-            return self.host
-        
-        @property
-        def port(self):
-            return self.port
-        
-        @property
-        def master_host(self):
-            return self.master_host
-        
-        @property
-        def master_port(self):
-            return self.master_port
 
 config = Conf(args)
 
 def main():
-    # You can use print statements as follows for debugging, they'll be visible when running tests.
-    print("Logs from your program will appear here!")
-
-    # Uncomment this to pass the first stage
     if config.port is None:
         print("Missing port argument")
     if config.role == "slave" and (config.master_host is None or config.master_port is None):
         print("Missing master_host or master_port argument")
     if config.role == "master" and (config.master_host is not None or config.master_port is not None):
         print("Master cannot have master_host or master_port arguments")
-        
-    server = Server(config)
-    server.run()
-   
 
+    local_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    local_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    local_socket.bind((config.host, config.port))
+    local_socket.listen()
+
+    vault = Vault(config)
+    if vault.role == "slave":
+        server = ServerMasterConnectThread(vault) 
+        server.start()
+
+    while True:
+        c, addr = local_socket.accept()
+        print(f"Connection from {addr}")
+        server = Server(c, vault)
+        server.start()
 
 if __name__ == "__main__":
-    main() 
+    print("Configs: ", config.__dict__)
+    main()
