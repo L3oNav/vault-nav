@@ -14,7 +14,7 @@ class MemoryStorage:
     def __init__(self):
         self.storage = {}
 
-    def set(self, key, value, lifetime: datetime = None):
+    def save(self, key, value, lifetime: datetime = None):
         self.storage[key] = Item(value, lifetime) 
     
     def get(self, key):
@@ -23,7 +23,6 @@ class MemoryStorage:
             if item.lifetime and self.expired(key, item.lifetime):
                 del self.storage[key]
                 return None
-            
             return item.value
         return None
         
@@ -35,13 +34,19 @@ class MemoryStorage:
     
     def expired(self, key, item_lifetime):
         if item_lifetime < datetime.now():
-            self.set(key, None)
+            self.save(key, None)
             return True
         return False
     
     def printall(self):
-        for key, value in self.storage.items():
-            print(f"{key}: {value.value}")
+        # is storage emply
+        
+        if not self.storage:
+            print("Memory is empty")
+            return
+
+        for key, item in self.storage.items():
+            print(f"{key}: {item.value}")
 
     def exists(self, key):
         return key in self.storage

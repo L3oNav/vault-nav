@@ -1,9 +1,4 @@
-
-
 def flatten_list(input_list):
-    """
-    Flattens a list of list
-    """
     return [x for xl in input_list for x in xl]
 
 def generate_alphanumeric_string():
@@ -37,7 +32,7 @@ class RESPParser:
         Returns a list of items received as input string
         """
         input_list = input.split(b"*")[1:]
-        split = lambda x:  x.split(b"\r\n")[::2][1:] # get every other item
+        split = lambda x: x.split(b"\r\n")[::2][1:] # get every other item
         input_list = flatten_list([split(x) for x in input_list])
 
         return input_list

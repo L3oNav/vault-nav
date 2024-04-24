@@ -2,7 +2,7 @@
 import socket
 import asyncio
 import argparse
-from app.server import Server, ServerMasterConnectThread
+from app.server import ServerThread, ServerMasterConnectThread
 from app.vault import Vault
 import hashlib
 
@@ -18,6 +18,8 @@ def generate_alphanumeric_string():
         import random
         import string
         return ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(40))
+
+
 class Conf:
     def __init__(self, args):
         self.host = args.host
@@ -32,6 +34,7 @@ class Conf:
 config = Conf(args)
 
 def main():
+
     if config.port is None:
         print("Missing port argument")
     if config.role == "slave" and (config.master_host is None or config.master_port is None):
@@ -39,20 +42,19 @@ def main():
     if config.role == "master" and (config.master_host is not None or config.master_port is not None):
         print("Master cannot have master_host or master_port arguments")
 
+    vault = Vault(config)
     local_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     local_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    local_socket.bind((config.host, config.port))
+    local_socket.bind(("localhost", config.port))
     local_socket.listen()
-
-    vault = Vault(config)
-    if vault.role == "slave":
+    
+    if vault.role == Vault.SLAVE:
         server = ServerMasterConnectThread(vault) 
         server.start()
 
     while True:
-        c, addr = local_socket.accept()
-        print(f"Connection from {addr}")
-        server = Server(c, vault)
+        conn, addr = local_socket.accept()
+        server = ServerThread(conn, vault)
         server.start()
 
 if __name__ == "__main__":

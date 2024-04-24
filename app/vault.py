@@ -57,8 +57,10 @@ class Vault:
             key = RESPParser.convert_to_string(key)
             value = RESPParser.convert_to_string(value)
             if Vault.PX in data:
-                lifetime = datetime.now() + timedelta(milliseconds=RESPParser.convert_to_int(data[Vault.PX][i]))
-            self.memory.set(key, value, lifetime)
+                lifetime = (
+                    datetime.now() + timedelta(milliseconds=RESPParser.convert_to_int(data[Vault.PX][i]))
+                )
+            self.memory.save(key, value, lifetime)
         return Vault.OK
 
     def get_memory(self, key):
@@ -77,7 +79,7 @@ class Vault:
                 result[Vault.ECHO] = input[curr+1]
                 curr+=Vault.LEN_ECHO
             elif input[curr].lower()==Vault.SET:
-                result[Vault.SET] = result.get(Vault.SET,[])+[[input[curr+1], input[curr+2]]]
+                result[Vault.SET] = result.get(Vault.SET,[]) + [[input[curr+1], input[curr+2]]]
                 curr+=Vault.LEN_SET
             elif input[curr].lower()==Vault.GET:
                 result[Vault.GET] = input[curr+1]
@@ -126,11 +128,9 @@ class Vault:
     
     def do_handshake(self):
         client_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        print(f"master_host: {self.config['master_host']} type: {type(self.config['master_host'])}, master_port: {self.config['master_port']}, type: {type(self.config['master_port'])}")
-        client_sock.connect((self.config["master_host"],self.config["master_port"]))
+        client_sock.connect((self.config["master_host"], self.config["master_port"]))
         client_sock.send(RESPParser.convert_list_to_resp(["ping"]))
         pong = client_sock.recv(1024)
-        print(RESPParser.process(pong))
         response = [Vault.RELP_CONF,"listening-port",self.config["port"]]
         client_sock.send(RESPParser.convert_list_to_resp(response))
         pong = client_sock.recv(1024)
@@ -140,12 +140,12 @@ class Vault:
         response = [Vault.PSYNC, "?","-1"]
         client_sock.send(RESPParser.convert_list_to_resp(response))
         pong = client_sock.recv(1024)
-        # client_sock.close()
         return client_sock
         
     def rdb_parsed(self):
         rdb = base64.b64decode("UkVESVMwMDEx+glyZWRpcy12ZXIFNy4yLjD6CnJlZGlzLWJpdHPAQPoFY3RpbWXCbQi8ZfoIdXNlZC1tZW3CsMQQAPoIYW9mLWJhc2XAAP/wbjv+wP9aog==")
-        parsed = f"${len(rdb)}\r\n".encode() + rdb 
+        length = len(rdb)
+        parsed = (b"$" + RESPParser.convert_to_binary(length) + b"\r\n" + rdb)
         return parsed
         
     def is_master(self):
@@ -156,7 +156,7 @@ class Vault:
             self.buffers[k].append(command)
         return 0
         
-    def add_new_replica(self, ):
+    def add_new_replica(self):
         """
             This function takes care of everything needed to add a new replica
             1. Create a new buffer
