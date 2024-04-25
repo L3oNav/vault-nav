@@ -49,7 +49,7 @@ def main():
     local_socket.listen()
     
     if vault.role == Vault.SLAVE:
-        server = ServerMasterConnectThread(vault) 
+        server = ServerMasterConnectThread(vault)
         server.start()
 
     while True:

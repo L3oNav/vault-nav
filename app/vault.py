@@ -129,6 +129,7 @@ class Vault:
     def do_handshake(self):
         client_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         client_sock.connect((self.config["master_host"], self.config["master_port"]))
+
         client_sock.send(RESPParser.convert_list_to_resp(["ping"]))
         pong = client_sock.recv(1024)
         response = [Vault.RELP_CONF,"listening-port",self.config["port"]]
@@ -140,8 +141,10 @@ class Vault:
         response = [Vault.PSYNC, "?","-1"]
         client_sock.send(RESPParser.convert_list_to_resp(response))
         pong = client_sock.recv(1024)
+        rdb=client_sock.recv(1024)
+        print("retorning client sock")
         return client_sock
-        
+
     def rdb_parsed(self):
         rdb = base64.b64decode("UkVESVMwMDEx+glyZWRpcy12ZXIFNy4yLjD6CnJlZGlzLWJpdHPAQPoFY3RpbWXCbQi8ZfoIdXNlZC1tZW3CsMQQAPoIYW9mLWJhc2XAAP/wbjv+wP9aog==")
         length = len(rdb)

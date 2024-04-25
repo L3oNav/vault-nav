@@ -98,15 +98,12 @@ class ServerMasterConnectThread(Thread):
     def __init__(self, vault: Vault):
         super().__init__()
         self.vault = vault 
-        self.conn = None
+        self.conn = self.vault.do_handshake()
 
     def run(self):
-        self.conn = self.vault.do_handshake()
-        print("Master connection established")
-        while True:
-
+        while True and self.conn is not None:
             original_message = self.conn.recv(1024)
-            print("Master connection, original message: ", original_message)
+            print('Master, original message: ', original_message)
 
             if not original_message:
                 break
