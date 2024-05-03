@@ -1,7 +1,6 @@
 from threading import Thread
 from app.vault import Vault
-from app.utils import RESPParser
-from app.main import logger
+from app.utils import RESPParser, logger
 import socket
 import asyncio
 
@@ -16,18 +15,23 @@ class ServerMaster(Thread):
         self.buffer_id = None
 
     def run(self):
+        logger.info("Master running...")
         while True:
+
             if self.talking_to_replica:
+                logger.info("Talking to replica")
                 break
 
             original_message = self.conn.recv(1024)
-
+            logger.debug(f"Master original message: {original_message}")
             if not original_message:
+                logger.debug("No message received")
                 break
 
-            print(f"Original message: {original_message}, Data pre-process: {original_message}")
             data = RESPParser.process(original_message)
+            logger.debug(f"Master data post-process: {data}")
             data = self.vault.parse_arguments(data)
+            logger.debug(f"Master data post-argument parsing: {data}")
 
             if Vault.PING in data:
                 self.conn.send(RESPParser.convert_string_to_simple_string_resp(b"PONG"))
@@ -101,28 +105,36 @@ class ServerSlave(Thread):
         super().__init__()
         self.vault = vault 
         self.conn = self.vault.do_handshake()
-        logger.info(f"Slave from {self.vault.master_host}:{self.vault.master_port}")
-        logger.degug(f"Slave connection: {self.conn}")
+        logger.debug(f"Slave connection: {self.conn}")
 
     def run(self):
-        while True and self.conn is not None:
+        logger.info("Slave running...")
+        while True:
             original_message = self.conn.recv(1024)
+            logger.info(f"Slave original message: {original_message}")
 
             if not original_message:
+                logger.debug("No message received")
                 break
 
-            print(f"Original message: {original_message}, Data pre-process: {original_message}")
+            logger.debug(f"Data pre-process: {original_message}")
             data = RESPParser.process(original_message)
+            logger.debug(f"Data post-process: {data}")
             data = self.vault.parse_arguments(data)
+            logger.debug(f"Data post-argument parsing: {data}")
 
             if Vault.SET in data:
+                logger.debug(f"Slave SET | {data[Vault.SET]}")
                 self.vault.set_memory(data[Vault.SET],data)
                 # self.conn.send(RESPParser.convert_string_to_bulk_string_resp("OK"))
             elif Vault.RELP_CONF in data:
+                logger.debug(f"Slave REPLCONF | {data[Vault.RELP_CONF]}")
                 self.conn.send(RESPParser.convert_list_to_resp([Vault.RELP_CONF, Vault.ACK, '0']))
             else:
+                logger.debug("Error message")
                 self.conn.send(b"-Error message\r\n")
             if self.vault.replica_present and Vault.SET in data:
-                print("Adding SET command to buffer")
+                logger.debug(f"Adding SET | {data} | command to buffer")
                 self.vault.add_command_buffer(original_message)
+        logger.info("Slave connection closed")
         self.conn.close()

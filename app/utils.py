@@ -1,3 +1,10 @@
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+logger.addHandler(logging.StreamHandler())
+
 
 def flatten_list(input_list):
     return [x for xl in input_list for x in xl]

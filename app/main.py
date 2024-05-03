@@ -4,12 +4,7 @@ import argparse
 from app.server import ServerMaster, ServerSlave
 from app.vault import Vault
 import hashlib
-import logging
-
-logging.basicConfig(level=logging.DEBUG) # DEBUG, INFO, WARNING, ERROR, CRITICAL
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-logger.info("Logger started")
+from app.utils import logger
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--host", default="localhost", type=str, help="Host to bind the server")
@@ -57,7 +52,7 @@ def main():
         server.start()
 
     while True:
-        loger.info("Master waiting for connection")
+        logger.info("Master waiting for connection")
         conn, addr = local_socket.accept()
         server = ServerMaster(conn, vault)
         server.start()
