@@ -1,4 +1,3 @@
-# Uncomment this to pass the first stage
 import socket
 import asyncio
 import argparse
