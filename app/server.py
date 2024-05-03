@@ -101,11 +101,9 @@ class ServerSlave(Thread):
         super().__init__()
         self.vault = vault 
         self.conn = self.vault.do_handshake()
-        print(f"Slave connection: {True if self.conn else False}")
 
     def run(self):
         while True and self.conn is not None:
-            print("Slave running")
             original_message = self.conn.recv(1024)
 
             if not original_message:
