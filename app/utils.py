@@ -1,3 +1,4 @@
+
 def flatten_list(input_list):
     return [x for xl in input_list for x in xl]
 
@@ -28,15 +29,12 @@ class RESPParser:
     
     @staticmethod
     def process_arrays(input):
-        """
-        Returns a list of items received as input string
-        """
-        input_list = input.split(b"*")[1:]
-        split = lambda x: x.split(b"\r\n")[::2][1:] # get every other item
-        input_list = flatten_list([split(x) for x in input_list])
-
+        input_list = input.split(b"\r\n")[1:]
+        input_list = [x for i, x in enumerate(input_list) if i % 2 != 0]
+        print(input_list)
         return input_list
 
+    @staticmethod
     def process_bulk_strings(input):
         input_processed = input.split(b"\r\n")
         return input_processed[1]
@@ -55,7 +53,8 @@ class RESPParser:
         input_processed = b"+"+RESPParser.convert_to_binary(input)+\
             b"\r\n"
         return input_processed
-    
+
+    @staticmethod
     def convert_string_to_bulk_string_resp(input):
         length = RESPParser.convert_to_binary(len(input))
         input_processed = b"$"+length+b"\r\n"+\

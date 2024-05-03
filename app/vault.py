@@ -2,11 +2,12 @@ from typing import Dict, List
 from collections import deque
 from datetime import datetime, timedelta
 from app.utils import RESPParser, generate_alphanumeric_string
-from app.db import MemoryStorage, Item
+from app.db import MemoryStorage
 import base64
 import socket
 
 class Vault:
+
     ACK = b"ACK"
     CAPABILITY = b"capa"
     CONFIG = b"config"
@@ -15,7 +16,7 @@ class Vault:
     GETACK = b"GETACK"
     MASTER = "master"
     INFO = b"info"
-    LISTENING_PORT=b"listening-port"
+    LISTENING_PORT = b"listening-port"
     SET = b"set"
     SLAVE = "slave"
     PING = b"ping"
@@ -37,6 +38,7 @@ class Vault:
     LEN_PING = 1
     LEN_PX = 2
     LEN_PSYNC = 3
+    LEN_GETACK = 2
 
     def __init__(self, config):
         self.config = vars(config)
@@ -104,6 +106,9 @@ class Vault:
                 if input[curr]==Vault.LISTENING_PORT:
                     repl_result[Vault.LISTENING_PORT] = input[curr+1]
                     curr+=Vault.LEN_LISTENING_PORT
+                elif input[curr]==Vault.GETACK:
+                    repl_result[Vault.GETACK] = input[curr+1]
+                    curr+=Vault.LEN_GETACK
                 while curr<len(input) and input[curr]==Vault.CAPABILITY:
                     repl_result[Vault.CAPABILITY] = repl_result.get(Vault.CAPABILITY,[])+[input[curr+1]]
                     curr+=Vault.LEN_CAPABILITY
@@ -142,7 +147,7 @@ class Vault:
         client_sock.send(RESPParser.convert_list_to_resp(response))
         pong = client_sock.recv(1024)
         rdb=client_sock.recv(1024)
-        print("retorning client sock")
+    
         return client_sock
 
     def rdb_parsed(self):

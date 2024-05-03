@@ -5,7 +5,6 @@ from app.server import ServerMaster, ServerSlave
 from app.vault import Vault
 import hashlib
 
-
 parser = argparse.ArgumentParser()
 parser.add_argument("--host", default="localhost", type=str, help="Host to bind the server")
 parser.add_argument("--port", default=6379 ,type=int, help="Port to bind the server")

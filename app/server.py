@@ -4,7 +4,7 @@ from app.utils import RESPParser
 import socket
 import asyncio
 
-class ServerThread(Thread):
+class ServerMaster(Thread):
 
     def __init__(self, conn, vault: Vault, do_handshake: bool = False):
         super().__init__()
@@ -21,11 +21,11 @@ class ServerThread(Thread):
                 break
 
             original_message = self.conn.recv(1024)
-            print("Server, original message: ", original_message)
 
             if not original_message:
                 break
 
+            print(f"Original message: {original_message}, Data pre-process: {original_message}")
             data = RESPParser.process(original_message)
             data = self.vault.parse_arguments(data)
 
@@ -63,6 +63,7 @@ class ServerThread(Thread):
                 self.conn.send(RESPParser.convert_string_to_bulk_string_resp(info))
 
             elif Vault.RELP_CONF in data:
+                conf = data[Vault.RELP_CONF]
                 self.conn.send(RESPParser.convert_string_to_bulk_string_resp("OK"))
 
             elif Vault.PSYNC in data:
@@ -93,7 +94,8 @@ class ServerThread(Thread):
                 self.conn.send(command)
                 print(thread_queue)
 
-class ServerMasterConnectThread(Thread):
+
+class ServerSlave(Thread):
 
     def __init__(self, vault: Vault):
         super().__init__()
@@ -103,11 +105,11 @@ class ServerMasterConnectThread(Thread):
     def run(self):
         while True and self.conn is not None:
             original_message = self.conn.recv(1024)
-            print('Master, original message: ', original_message)
 
             if not original_message:
                 break
 
+            print(f"Original message: {original_message}, Data pre-process: {original_message}")
             data = RESPParser.process(original_message)
             data = self.vault.parse_arguments(data)
 
@@ -115,11 +117,13 @@ class ServerMasterConnectThread(Thread):
                 print(f"setting {data[Vault.SET]}, {data}")
                 self.vault.set_memory(data[Vault.SET],data)
                 # self.conn.send(RESPParser.convert_string_to_bulk_string_resp("OK"))
+            elif Vault.RELP_CONF in data and Vault.GETACK in data[Vault.RELP_CONF]:
+                self.conn.send(
+                    RESPParser.convert_list_to_resp([Vault.RELP_CONF, Vault.ACK, "0"])
+                )
             else:
                 self.conn.send(b"-Error message\r\n")
-
             if self.vault.replica_present and Vault.SET in data:
                 print("Adding SET command to buffer")
                 self.vault.add_command_buffer(original_message)
-        print("Closing Replica connection")
         self.conn.close()
