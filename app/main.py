@@ -38,23 +38,26 @@ config = Conf(args)
 def main():
 
     if config.port is None:
-        print("Missing port argument")
+        logger.error("Missing port argument")
     if config.role == "slave" and (config.master_host is None or config.master_port is None):
-        print("Missing master_host or master_port argument")
+        logger.error("Missing master_host or master_port argument")
     if config.role == "master" and (config.master_host is not None or config.master_port is not None):
-        print("Master cannot have master_host or master_port arguments")
+        logger.error("Master cannot have master_host or master_port arguments")
 
     vault = Vault(config)
     local_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     local_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     local_socket.bind(("localhost", config.port))
     local_socket.listen()
+    logger.info(f"Server started on {config.host}:{config.port}")
 
     if vault.role == Vault.SLAVE:
+        logger.info(f"Slave from {config.master_host}:{config.master_port}")
         server = ServerSlave(vault) 
         server.start()
 
     while True:
+        loger.info("Master waiting for connection")
         conn, addr = local_socket.accept()
         server = ServerMaster(conn, vault)
         server.start()
