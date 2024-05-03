@@ -7,7 +7,6 @@ def generate_alphanumeric_string():
         import string
         return ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(40))
 
-
 class RESPParser:
     
     NULL_STRING = b"$-1\r\n"
