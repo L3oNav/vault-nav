@@ -2,7 +2,7 @@
 import socket
 import asyncio
 import argparse
-from app.server import ServerThread, ServerMasterConnectThread
+from app.server import ServerMaster, ServerSlave
 from app.vault import Vault
 import hashlib
 
@@ -19,7 +19,6 @@ def generate_alphanumeric_string():
         import string
         return ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(40))
 
-
 class Conf:
     def __init__(self, args):
         self.host = args.host
@@ -29,7 +28,6 @@ class Conf:
         self.replicaoffset = 0
         self.master_host = args.replicaof[0] if args.replicaof else None
         self.master_port = int(args.replicaof[1]) if args.replicaof else None
-
 
 config = Conf(args)
 
@@ -47,14 +45,14 @@ def main():
     local_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     local_socket.bind(("localhost", config.port))
     local_socket.listen()
-    
+
     if vault.role == Vault.SLAVE:
-        server = ServerMasterConnectThread(vault)
+        server = ServerSlave(vault) 
         server.start()
 
     while True:
         conn, addr = local_socket.accept()
-        server = ServerThread(conn, vault)
+        server = ServerMaster(conn, vault)
         server.start()
 
 if __name__ == "__main__":
