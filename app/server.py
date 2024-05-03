@@ -15,7 +15,7 @@ class ServerMaster(Thread):
         self.buffer_id = None
 
     def run(self):
-        print("Server running")
+        print("Master running")
         while True:
             if self.talking_to_replica:
                 break
@@ -103,6 +103,7 @@ class ServerSlave(Thread):
         self.conn = self.vault.do_handshake()
 
     def run(self):
+        print("Slave running")
         while True and self.conn is not None:
             original_message = self.conn.recv(1024)
 
@@ -117,10 +118,8 @@ class ServerSlave(Thread):
                 print(f"setting {data[Vault.SET]}, {data}")
                 self.vault.set_memory(data[Vault.SET],data)
                 # self.conn.send(RESPParser.convert_string_to_bulk_string_resp("OK"))
-            elif Vault.RELP_CONF in data and Vault.GETACK in data[Vault.RELP_CONF]:
-                self.conn.send(
-                    RESPParser.convert_list_to_resp([Vault.RELP_CONF, Vault.ACK, "0"])
-                )
+            elif Vault.RELP_CONF in data:
+                self.conn.send(RESPParser.convert_list_to_resp([Vault.RELP_CONF, Vault.ACK, '0']))
             else:
                 self.conn.send(b"-Error message\r\n")
             if self.vault.replica_present and Vault.SET in data:
