@@ -102,7 +102,7 @@ class ServerSlave(Thread):
         self.vault = vault 
         self.conn = self.vault.do_handshake()
         logger.info(f"Slave from {self.vault.master_host}:{self.vault.master_port}")
-        logger.degug(f"Slave connection: {self.conn})
+        logger.degug(f"Slave connection: {self.conn}")
 
     def run(self):
         while True and self.conn is not None:
