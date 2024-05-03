@@ -29,8 +29,9 @@ class RESPParser:
     
     @staticmethod
     def process_arrays(input):
-        input_list = input.split(b"\r\n")[1:]
-        input_list = [x for i, x in enumerate(input_list) if i % 2 != 0]
+        input_list = input.split(b"*")[1:]
+        split = lambda x: x.split(b"\r\n")[::2][1:] # get every other item
+        input_list = flatten_list([split(x) for x in input_list])
         print(input_list)
         return input_list
 
