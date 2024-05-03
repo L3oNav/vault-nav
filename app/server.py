@@ -114,7 +114,6 @@ class ServerSlave(Thread):
             data = self.vault.parse_arguments(data)
 
             if Vault.SET in data:
-                print(f"setting {data[Vault.SET]}, {data}")
                 self.vault.set_memory(data[Vault.SET],data)
                 # self.conn.send(RESPParser.convert_string_to_bulk_string_resp("OK"))
             elif Vault.RELP_CONF in data:
