@@ -4,6 +4,12 @@ import argparse
 from app.server import ServerMaster, ServerSlave
 from app.vault import Vault
 import hashlib
+import logging
+
+logging.basicConfig(level=logging.DEBUG) # DEBUG, INFO, WARNING, ERROR, CRITICAL
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+logger.info("Logger started")
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--host", default="localhost", type=str, help="Host to bind the server")
@@ -54,5 +60,7 @@ def main():
         server.start()
 
 if __name__ == "__main__":
-    print("Configs: ", config.__dict__)
+    logger.info("Starting server")
+    logger.info(f"Role: {config.role}")
+    logger.debug(f"{[config.__dict__]}")
     main()

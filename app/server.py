@@ -15,7 +15,6 @@ class ServerMaster(Thread):
         self.buffer_id = None
 
     def run(self):
-        print("Master running")
         while True:
             if self.talking_to_replica:
                 break
