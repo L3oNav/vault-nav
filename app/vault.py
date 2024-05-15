@@ -13,6 +13,7 @@ class Vault:
     CONFIG = b"config"
     ECHO = b"echo"
     GET = b"get"
+    TYPE = b"type" 
     GETACK = b"GETACK"
     MASTER = "master"
     INFO = b"info"
@@ -31,6 +32,7 @@ class Vault:
     LEN_CONFIG = 1
     LEN_ECHO = 2
     LEN_GET = 2
+    LEN_TYPE = 2
     LEN_INFO = 2
     LEN_LISTENING_PORT = 2
     LEN_REPL_CONF = 1
@@ -68,6 +70,11 @@ class Vault:
     def get_memory(self, key):
         key = RESPParser.convert_to_string(key)
         value = self.memory.get(key)
+        return value
+
+    def get_type(self, key):
+        key = RESPParser.convert_to_string(key)
+        value = self.memory.get_type(key)
         return value
     
     def parse_arguments(self, input: List) -> Dict:
@@ -115,6 +122,9 @@ class Vault:
             elif input[curr]==Vault.PSYNC:
                 result[Vault.PSYNC] = input[curr+1:]
                 curr+=Vault.LEN_PSYNC
+            elif input[curr]==Vault.TYPE:
+                result[Vault.TYPE] = input[curr+1]
+                curr+=Vault.LEN_TYPE
             else:
                 # print(f"Unknown command {input[curr]}")
                 pass

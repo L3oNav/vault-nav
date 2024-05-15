@@ -17,7 +17,6 @@ class ServerMaster(Thread):
     def run(self):
         logger.info("Master running...")
         while True:
-
             if self.talking_to_replica:
                 logger.info("Talking to replica")
                 break
@@ -40,7 +39,6 @@ class ServerMaster(Thread):
                 self.conn.send(RESPParser.convert_string_to_bulk_string_resp(data[Vault.ECHO]))
 
             elif Vault.SET in data:
-                print(f"setting {data[Vault.SET]}, {data}")
                 self.vault.set_memory(data[Vault.SET], data)
                 self.conn.send(RESPParser.convert_string_to_bulk_string_resp("OK"))
 
@@ -51,6 +49,9 @@ class ServerMaster(Thread):
                     self.conn.send(result)
                 else:
                     self.conn.send(RESPParser.convert_string_to_bulk_string_resp(result))
+            elif Vault.TYPE in data:
+                result = self.vault.get_type(data[Vault.TYPE])
+                self.conn.send(RESPParser.convert_string_to_bulk_string_resp(result))
 
             elif Vault.CONFIG in data:
                 config_data = data[Vault.CONFIG]

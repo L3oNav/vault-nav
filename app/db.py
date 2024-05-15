@@ -25,7 +25,29 @@ class MemoryStorage:
                 return None
             return item.value
         return None
-        
+
+    def get_type(self, key):
+        """
+        Get the type of the value stored at key
+        str: string
+        """
+        item = self.storage.get(key)
+        _type = None
+        if item:
+            if item.lifetime and self.expired(key, item.lifetime):
+                del self.storage[key]
+                return None
+            _type = type(item.value).__name__ 
+
+        if _type is None:
+            return 'none'
+        elif _type == 'str':
+            return 'string'
+        elif _type == 'int':
+            return 'integer'
+        elif _type == 'float':
+            return 'float'
+                
     def delete(self, key):
         if key in self.storage:
             del self.storage[key]
